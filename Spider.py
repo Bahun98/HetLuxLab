@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the Excel file
+# 1.xlsm = testdata
+# TODO add real data sheet.
+
 file_path = 'data_quality_kleurtemperatuur1.xlsm'
 data = pd.read_excel(file_path, sheet_name='Main_data')
 
