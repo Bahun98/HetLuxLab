@@ -8,12 +8,12 @@ import re
 
 # TODO add real data sheet.
 
-# file_path = 'data_quality_kleurtemperatuur1.xlsm'
-file_path = 'data_quality_kleurtemperatuur2.xlsx'
+file_path = 'real_data.xlsx'
+# file_path = 'data_quality_kleurtemperatuur2.xlsx'
 data = pd.read_excel(file_path, sheet_name='Main_data')
 
 # Average per WIJK
-average_data = data.groupby('WIJK')[["Nature", "Human", "Efficiency"]].mean().reset_index()
+average_data = data.groupby('WIJK')[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().reset_index()
 
 # At startup
 wijken = sorted(data["WIJK"].dropna().unique())
@@ -182,6 +182,8 @@ def plot_spider_web(criteria, values, title):
     current_canvas.draw()
     current_canvas.get_tk_widget().pack(expand=True, fill='both')
 
+    plt.close()
+
 # When user selects a WIJK from dropdown
 def on_Wijk_selected(event):
     wijk = selected_Wijk.get()
@@ -207,8 +209,8 @@ def on_Wijk_selected(event):
         street_listbox.insert(tk.END, straat)
     
     # Compute WIJK averages
-    wijk_averages = filtered[["Nature", "Human", "Efficiency"]].mean().tolist()
-    criteria = ["Nature", "Human", "Efficiency"]
+    wijk_averages = filtered[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().tolist()
+    criteria = ["Nature_composite", "Humans_composite", "Efficiency_composite"]
     plot_spider_web(criteria, wijk_averages, wijk)
 
 def on_street_selected(event):
@@ -225,8 +227,8 @@ def on_street_selected(event):
         return
 
     # Compute street averages
-    street_averages = filtered[["Nature", "Human", "Efficiency"]].mean().tolist()
-    criteria = ["Nature", "Human", "Efficiency"]
+    street_averages = filtered[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().tolist()
+    criteria = ["Nature_composite", "Humans_composite", "Efficiency_composite"]
     plot_spider_web(criteria, street_averages, straat)
 
 dropdown.bind("<<ComboboxSelected>>", on_Wijk_selected)
