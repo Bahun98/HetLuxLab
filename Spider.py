@@ -8,8 +8,8 @@ import re
 
 # TODO add real data sheet.
 
-file_path = 'data_quality_kleurtemperatuur1.xlsm'
-# file_path = 'data_quality_kleurtemperatuur2.xlsx'
+# file_path = 'data_quality_kleurtemperatuur1.xlsm'
+file_path = 'data_quality_kleurtemperatuur2.xlsx'
 data = pd.read_excel(file_path, sheet_name='Main_data')
 
 # Average per WIJK
@@ -157,11 +157,8 @@ current_canvas = None
 # Plot radar chart
 def plot_spider_web(criteria, values, title):
     global current_canvas
-
-    # Clear previous plot widget (if any)
-    for widget in right_frame.winfo_children():
-        widget.destroy()
-
+    if current_canvas:
+        current_canvas.get_tk_widget().destroy()
 
     values += values[:1]
     angles = np.linspace(0, 2 * np.pi, len(criteria), endpoint=False).tolist()
@@ -185,48 +182,52 @@ def plot_spider_web(criteria, values, title):
     current_canvas.draw()
     current_canvas.get_tk_widget().pack(expand=True, fill='both')
 
-def extract_street_name(full_str):
-    return re.sub(r'\d+$', '', full_str).strip()
-
 # When user selects a WIJK from dropdown
 def on_Wijk_selected(event):
-    Wijk = selected_Wijk.get()
-    filtered = data[data["WIJK"] == Wijk].copy()
+    wijk = selected_Wijk.get()
+    filtered = data[data["WIJK"] == wijk].copy()
 
     if filtered.empty:
         return
 
-    df = average_data[average_data["WIJK"] == Wijk]
-    if df.empty:
-        return
+    # Clean up street names
+    filtered["Cleaned_Straat"] = (
+        filtered["straatnaam+identificatie_mast"]
+        .str.extract(r"^(.*?)(?:\s+\d+)?$")[0]
+        .str.strip()
+    )
     
-    values = df[["Nature", "Human", "Efficiency"]].values.flatten().tolist()
-    criteria = ["Nature", "Human", "Efficiency"]
-    plot_spider_web(criteria, values, Wijk)
+    # Store filtered data globally for use by street selection
+    global current_filtered_data
+    current_filtered_data = filtered
 
-    streets_raw = data [data["WIJK"] == Wijk]["straatnaam+identificatie_mast"].dropna().unique()
-    # We extract the unique ID from the streetname to group by streets.
-    streets = sorted([extract_street_name(s) for s in streets_raw])
-    street_listbox.delete(0, tk.END)  
-    for street in streets:
-        street_listbox.insert(tk.END, street)
+    # Update listbox with cleaned street names
+    street_listbox.delete(0, tk.END)
+    for straat in sorted(filtered["Cleaned_Straat"].unique()):
+        street_listbox.insert(tk.END, straat)
+    
+    # Compute WIJK averages
+    wijk_averages = filtered[["Nature", "Human", "Efficiency"]].mean().tolist()
+    criteria = ["Nature", "Human", "Efficiency"]
+    plot_spider_web(criteria, wijk_averages, wijk)
 
 def on_street_selected(event):
     selection = street_listbox.curselection()
     if not selection:
         return
-    street = street_listbox.get(selection[0])
 
-    # Filter original data for that street (ignoring unique ID)
-    filtered_street_data = data[data["straatnaam+identificatie_mast"].str.contains(street)]
+    straat = street_listbox.get(selection[0])
+    filtered = current_filtered_data[
+        current_filtered_data["Cleaned_Straat"] == straat
+    ]
 
-    if filtered_street_data.empty:
+    if filtered.empty:
         return
 
-    avg_values = filtered_street_data[["Nature", "Human", "Efficiency"]].mean().tolist()
+    # Compute street averages
+    street_averages = filtered[["Nature", "Human", "Efficiency"]].mean().tolist()
     criteria = ["Nature", "Human", "Efficiency"]
-
-    plot_spider_web(criteria, avg_values, f"Street: {street}")
+    plot_spider_web(criteria, street_averages, straat)
 
 dropdown.bind("<<ComboboxSelected>>", on_Wijk_selected)
 street_listbox.bind("<<ListboxSelect>>", on_street_selected)
