@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import re
+from utils.street_table import update_street_detail_table
 
 # TODO add real data sheet.
 
@@ -34,10 +35,14 @@ left_frame = tk.Frame(main_frame, width=200, height=600, bg="lightgray")
 left_frame.pack(side="left", fill="y")
 left_frame.pack_propagate(False)
 
-# Right frame for graphs
-right_frame = tk.Frame(main_frame, width=600, height=600)
-right_frame.pack(side="right", fill="both", expand=True)
+# Center frame for spider graph
+center_frame = tk.Frame(main_frame, width=400, height=600)
+center_frame.pack(side="left", fill="both", expand=True)
 
+# Right frame for value table
+right_frame = tk.Frame(main_frame, width=200, height=600, bg="white")
+right_frame.pack(side="left", fill="y")
+right_frame.pack_propagate(False)
 
 # Label for wijk selectiion
 label = tk.Label(
@@ -78,78 +83,13 @@ street_scrollbar.config(command=street_listbox.yview)
 street_listbox.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(0, 10))
 street_scrollbar.pack(side="right", fill="y", pady=(0, 10))
 
-def show_detail_table(Wijk, _):
-    filtered = data[data["WIJK"] == Wijk].copy()
-
-    if filtered.empty:
-        return
-
-    # Compute derived metrics
-    filtered["Lumen_per_m2"] = filtered["LUMEN_LAMP"] / (filtered["LPH_ARMATUUR"] * 16)
-    filtered["Composite_Score"] = (
-        filtered["CK_IN_KELVIN"] + filtered["LPH_ARMATUUR"] + filtered["Lumen_per_m2"]
-    ) / 3
-
-    # Group by street and aggregate
-    grouped = filtered.groupby("STRAATNAAM").agg({
-        "CK_IN_KELVIN": ["median", "var"],
-        "LPH_ARMATUUR": ["median", "var"],
-        "Lumen_per_m2": "mean",
-        "Composite_Score": "mean"
-    }).reset_index()
-
-    # Rename and flatten columns
-    grouped.columns = [
-        "Street",
-        "Color Temperature Median",
-        "Variance CT",
-        "Pole Height Median",
-        "Variance PH",
-        "Lumen per m²",
-        "Composite Score"
-    ]
-
-    grouped = grouped.round(2)
-    grouped = grouped.fillna(0)  # Replace NaNs with 0
-
-    # Create popup window
-    win = tk.Toplevel()
-    
-    # Dynamic sizing
-    row_height = 25
-    num_rows = len(grouped)
-    height = min(600, max(200, row_height * (num_rows + 2)))
-    width = 180 * len(grouped.columns)
-    win.geometry(f"{width}x{height}")
-
-    win.title(f"{Wijk} - Per Street Summary")
-
-    columns = list(grouped.columns)
-    tree = ttk.Treeview(win, columns=columns, show="headings")
-
-    for col in columns:
-        tree.heading(col, text=col)
-        tree.column(col, anchor='center')
-
-    for _, row in grouped.iterrows():
-        tree.insert("", "end", values=list(row))
-
-    # Vertical scrollbar
-    scrollbar = ttk.Scrollbar(win, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side='right', fill='y')
-
-    tree.pack(fill='both', expand=True, padx=10, pady=10)
-
-
-
 # Handle click on radar chart
 def on_edge_click(event):
     line = event.artist
     ind = event.ind[0] % len(line.criteria)
     clicked_criteria = line.criteria[ind]
     Wijk_name = line.Wijk
-    show_detail_table(Wijk_name, clicked_criteria)
+    update_street_detail_table(Wijk_name, data)
 
 # Keep a global canvas reference so we can destroy previous plot
 current_canvas = None
@@ -178,7 +118,7 @@ def plot_spider_web(criteria, values, title):
 
 
     # Embed in right frame
-    current_canvas = FigureCanvasTkAgg(fig, master=right_frame)
+    current_canvas = FigureCanvasTkAgg(fig, master=center_frame)
     current_canvas.draw()
     current_canvas.get_tk_widget().pack(expand=True, fill='both')
 
@@ -221,15 +161,17 @@ def on_street_selected(event):
     straat = street_listbox.get(selection[0])
     filtered = current_filtered_data[
         current_filtered_data["Cleaned_Straat"] == straat
-    ]
+    ].copy()
 
     if filtered.empty:
         return
 
-    # Compute street averages
+    # Compute spider plot values
     street_averages = filtered[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().tolist()
     criteria = ["Nature_composite", "Humans_composite", "Efficiency_composite"]
     plot_spider_web(criteria, street_averages, straat)
+
+    update_street_detail_table(filtered, right_frame)
 
 dropdown.bind("<<ComboboxSelected>>", on_Wijk_selected)
 street_listbox.bind("<<ListboxSelect>>", on_street_selected)
