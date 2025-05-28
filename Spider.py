@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import re
 from utils.street_table import update_street_detail_table
 from calc.calculations import generate_data_frames
+from utils.scrollable_frame import create_scrollable_frame
 
 df_complete, df_clean, df_missing = generate_data_frames()
 
@@ -18,7 +19,7 @@ wijken = sorted(df_complete["WIJK"].dropna().unique())
 root = tk.Tk()
 root.title("Wijk Spider Web Tool")
 root.geometry("800x600")
-# root.resizable(False, False) # Uncomment this to force the app to be unresizable
+# root.resizable(False, False)
 
 # Main container
 main_frame = tk.Frame(root, width=800, height=600)
@@ -34,47 +35,46 @@ left_frame.pack_propagate(False)
 center_frame = tk.Frame(main_frame, width=400, height=600)
 center_frame.pack(side="left", fill="both", expand=True)
 
-# Right frame for value table
-right_frame = tk.Frame(main_frame, width=200, height=600, bg="white")
-right_frame.pack(side="left", fill="y")
-right_frame.pack_propagate(False)
+# Right frame container (fixed size, no scroll yet)
+right_frame_container = tk.Frame(main_frame, width=300, height=600, bg="lightgray")
+right_frame_container.pack(side="left", fill="y")
+right_frame_container.pack_propagate(False)
 
-# Label for wijk selectiion
+# Scrollable frame inside right_frame_container
+right_scrollable_frame, right_inner_frame = create_scrollable_frame(right_frame_container)
+
+# Label for wijk selection
 label = tk.Label(
     left_frame,
     text="Select a wijk:",
-    bg="lightgray",          # Match left_frame background
-    font=("Helvetica", 12, "bold"),  # Customize font and size
-    anchor="w"             # Align text to the left (optional)
+    bg="lightgray",
+    font=("Helvetica", 12, "bold"),
+    anchor="w"
 )
 label.pack(side="top", anchor="n", fill="x", padx=10, pady=(10, 0))
 
-
-# Dropdown for wijk selection and some styling
-
+# Combobox style
 style = ttk.Style()
-style.theme_use("clam")  # Use a better-looking theme
-
+style.theme_use("clam")
 style.configure("TCombobox",
-    fieldbackground="white",     # Background of the entry
-    background="white",          # Background when clicked
-    foreground="black",          # Text color
+    fieldbackground="white",
+    background="white",
+    foreground="black",
     padding=5,
-    relief="flat",               # Flat like modern web menus
+    relief="flat",
     borderwidth=1
 )
 
+# Wijk dropdown
 selected_Wijk = tk.StringVar()
 dropdown = ttk.Combobox(left_frame, textvariable=selected_Wijk, values=wijken, state="readonly")
 dropdown.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
 
-# Scrollbar + Listbox for streets
+# Street listbox with scrollbar
 street_scrollbar = ttk.Scrollbar(left_frame, orient="vertical")
 street_listbox = tk.Listbox(left_frame, yscrollcommand=street_scrollbar.set, height=20)
-
 street_scrollbar.config(command=street_listbox.yview)
 
-# Pack both so scrollbar is beside listbox
 street_listbox.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=(0, 10))
 street_scrollbar.pack(side="right", fill="y", pady=(0, 10))
 
@@ -89,17 +89,29 @@ def on_edge_click(event):
 # Keep a global canvas reference so we can destroy previous plot
 current_canvas = None
 
-# Plot radar chart
-def plot_spider_web(criteria, values, title):
+def plot_spider_web(criteria, values, title, filtered_df):
     global current_canvas
-    if current_canvas:
-        current_canvas.get_tk_widget().destroy()
 
+    # Clear previous canvas and missing data label if any
+    for widget in center_frame.winfo_children():
+        widget.destroy()
+
+    # Calculate missing percentage
+    missing_percent = filtered_df['missing_zero_flag'].mean() * 100 
+    total_lamps = len(filtered_df)
+    info_str = f"Missing or Zero Data: {missing_percent:.1f}% — Total Lamps: {total_lamps}"
+
+    # Add label above the plot
+    missing_label = tk.Label(center_frame, text=info_str, foreground="red", font=("Segoe UI", 10, "italic"), bg="white")
+    missing_label.pack(anchor="w", padx=10, pady=(5, 0))
+
+    # Prepare radar chart
     values += values[:1]
     angles = np.linspace(0, 2 * np.pi, len(criteria), endpoint=False).tolist()
     angles += angles[:1]
 
     fig, ax = plt.subplots(subplot_kw={'polar': True})
+    ax.set_ylim(1, 5)
     line, = ax.plot(angles, values, 'o-', label=title, picker=True)
     ax.fill(angles, values, alpha=0.25)
     ax.set_xticks(angles[:-1])
@@ -111,13 +123,13 @@ def plot_spider_web(criteria, values, title):
     line.raw_values = values[:-1]
     line.Wijk = title
 
-
-    # Embed in right frame
+    # Embed in Tkinter
     current_canvas = FigureCanvasTkAgg(fig, master=center_frame)
     current_canvas.draw()
     current_canvas.get_tk_widget().pack(expand=True, fill='both')
 
     plt.close()
+
 
 # When user selects a WIJK from dropdown
 def on_Wijk_selected(event):
@@ -146,9 +158,9 @@ def on_Wijk_selected(event):
     # Compute WIJK averages
     wijk_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
     criteria = ["nature_composite", "humans_composite", "efficiency_composite"]
-    plot_spider_web(criteria, wijk_averages, wijk)
+    plot_spider_web(criteria, wijk_averages, wijk, filtered)
 
-def on_street_selected(event):
+def on_street_selected(event, right_inner_frame):
     selection = street_listbox.curselection()
     if not selection:
         return
@@ -164,12 +176,17 @@ def on_street_selected(event):
     # Compute spider plot values
     street_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
     criteria = ["nature_composite", "humans_composite", "efficiency_composite"]
-    plot_spider_web(criteria, street_averages, straat)
+    plot_spider_web(criteria, street_averages, straat, filtered)
 
-    update_street_detail_table(filtered, right_frame)
+    update_street_detail_table(filtered, right_inner_frame)
 
 dropdown.bind("<<ComboboxSelected>>", on_Wijk_selected)
-street_listbox.bind("<<ListboxSelect>>", on_street_selected)
+street_listbox.bind("<<ListboxSelect>>", lambda event: on_street_selected(event, right_inner_frame))
 
-# Run GUI
+
+def on_closing():
+    root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
 root.mainloop()
