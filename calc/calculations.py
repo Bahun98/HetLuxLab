@@ -17,10 +17,6 @@ def generate_data_frames():
     # Missing/zero value handling:
     cols = ['CK_IN_KELVIN', 'LUMEN_LAMP', 'LPH_ARMATUUR']
 
-    # for i in cols:
-    #     missing_or_zero = df_complete[i].isna() | (df_complete[i] == 0)
-    #     print(f'Missing or zero values for {i} are: {missing_or_zero.sum()}')
-
     # Create extra column that flags whether any of these 3 columns contain missing/zero values 
     df_complete['missing_zero_flag'] = ((df_complete[cols].isna()) | (df_complete[cols] == 0)).any(axis=1).astype(int)
 

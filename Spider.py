@@ -11,15 +11,16 @@ from utils.scrollable_frame import create_scrollable_frame
 
 df_complete, df_clean, df_missing = generate_data_frames()
 
-# data_frames = [df_complete, df_clean, df_missing]
-# At startup
-wijken = sorted(df_complete["WIJK"].dropna().unique())
+wijk_options = sorted(df_complete["WIJK"].dropna().unique())
 
 # GUI root
 root = tk.Tk()
 root.title("Wijk Spider Web Tool")
-root.geometry("800x600")
-# root.resizable(False, False)
+# root.geometry("800x600")
+root.state('zoomed')
+root.lift()
+root.attributes('-topmost', True)
+root.after_idle(root.attributes, '-topmost', False)
 
 # Main container
 main_frame = tk.Frame(root, width=800, height=600)
@@ -67,7 +68,7 @@ style.configure("TCombobox",
 
 # Wijk dropdown
 selected_Wijk = tk.StringVar()
-dropdown = ttk.Combobox(left_frame, textvariable=selected_Wijk, values=wijken, state="readonly")
+dropdown = ttk.Combobox(left_frame, textvariable=selected_Wijk, values=wijk_options, state="readonly")
 dropdown.pack(side="top", anchor="n", fill="x", padx=10, pady=10)
 
 # Street listbox with scrollbar
@@ -99,10 +100,10 @@ def plot_spider_web(criteria, values, title, filtered_df):
     # Calculate missing percentage
     missing_percent = filtered_df['missing_zero_flag'].mean() * 100 
     total_lamps = len(filtered_df)
-    info_str = f"Missing or Zero Data: {missing_percent:.1f}% — Total Lamps: {total_lamps}"
+    info_str = f"Total Lamps: {total_lamps} - Missing or Zero Data: {missing_percent:.1f}%"
 
     # Add label above the plot
-    missing_label = tk.Label(center_frame, text=info_str, foreground="red", font=("Segoe UI", 10, "italic"), bg="white")
+    missing_label = tk.Label(center_frame, text=info_str, foreground="black", font=("Segoe UI", 10, "italic"), bg="white")
     missing_label.pack(anchor="w", padx=10, pady=(5, 0))
 
     # Prepare radar chart
@@ -116,7 +117,7 @@ def plot_spider_web(criteria, values, title, filtered_df):
     ax.fill(angles, values, alpha=0.25)
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(criteria)
-    ax.set_title(f"{title} - Criteria Overview")
+    ax.set_title(f"{title}")
 
     # Attach metadata
     line.criteria = criteria
@@ -139,10 +140,9 @@ def on_Wijk_selected(event):
     if filtered.empty:
         return
 
-    # Clean up street names
     filtered["Cleaned_Straat"] = (
         filtered["straatnaam+identificatie_mast"]
-        .str.extract(r"^(.*?)(?:\s+\d+)?$")[0]
+        .str.extract(r"^([A-Za-zÀ-ÿ'\- ]+)", expand=False)
         .str.strip()
     )
     
@@ -152,12 +152,20 @@ def on_Wijk_selected(event):
 
     # Update listbox with cleaned street names
     street_listbox.delete(0, tk.END)
-    for straat in sorted(filtered["Cleaned_Straat"].unique()):
+    clean_streets = (
+        filtered["Cleaned_Straat"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+    clean_streets = clean_streets[clean_streets != ""]
+
+    for straat in sorted(clean_streets.unique()):
         street_listbox.insert(tk.END, straat)
-    
+
     # Compute WIJK averages
     wijk_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
-    criteria = ["nature_composite", "humans_composite", "efficiency_composite"]
+    criteria = ["Nature", "Humans", "Efficiency"]
     plot_spider_web(criteria, wijk_averages, wijk, filtered)
 
 def on_street_selected(event, right_inner_frame):
@@ -175,13 +183,16 @@ def on_street_selected(event, right_inner_frame):
 
     # Compute spider plot values
     street_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
-    criteria = ["nature_composite", "humans_composite", "efficiency_composite"]
+    criteria = ["Nature", "Humans", "Efficiency"]
     plot_spider_web(criteria, street_averages, straat, filtered)
 
     update_street_detail_table(filtered, right_inner_frame)
 
 dropdown.bind("<<ComboboxSelected>>", on_Wijk_selected)
 street_listbox.bind("<<ListboxSelect>>", lambda event: on_street_selected(event, right_inner_frame))
+
+selected_Wijk.set(wijk_options[0])
+on_Wijk_selected(None)
 
 
 def on_closing():

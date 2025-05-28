@@ -15,21 +15,26 @@ def create_scrollable_frame(root):
     canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)
 
-    # Pack scrollbar first so it appears on right
     scrollbar.pack(side="right", fill="y")
     canvas.pack(side="left", fill="both", expand=True)
 
-    # Mouse wheel support
     def _on_mousewheel(event):
         if platform.system() == 'Windows':
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         elif platform.system() == 'Darwin':
             canvas.yview_scroll(int(-1*event.delta), "units")
 
-    # For Windows and MacOS
-    canvas.bind_all("<MouseWheel>", _on_mousewheel)
-    # For Linux scroll up/down events
-    canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
-    canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
+    def _bind_mousewheel(event):
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
+        canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
+
+    def _unbind_mousewheel(event):
+        canvas.unbind_all("<MouseWheel>")
+        canvas.unbind_all("<Button-4>")
+        canvas.unbind_all("<Button-5>")
+
+    canvas.bind("<Enter>", _bind_mousewheel)
+    canvas.bind("<Leave>", _unbind_mousewheel)
 
     return canvas, scrollable_frame
