@@ -8,6 +8,7 @@ import re
 from utils.street_table import update_street_detail_table
 from calc.calculations import generate_data_frames
 from utils.scrollable_frame import create_scrollable_frame
+from PIL import Image, ImageTk
 
 df_complete, df_clean, df_missing = generate_data_frames()
 
@@ -15,8 +16,8 @@ wijk_options = sorted(df_complete["WIJK"].dropna().unique())
 
 # GUI root
 root = tk.Tk()
-root.title("Wijk Spider Web Tool")
-# root.geometry("800x600")
+root.title("Het Lux Lab lighting analysis tool")
+root.iconphoto(False, tk.PhotoImage(file="icons\luxlabicon.png"))
 root.state('zoomed')
 root.lift()
 root.attributes('-topmost', True)
@@ -88,10 +89,8 @@ def on_edge_click(event):
     update_street_detail_table(Wijk_name, df_complete)
 
 # Keep a global canvas reference so we can destroy previous plot
-current_canvas = None
 
 def plot_spider_web(criteria, values, title, filtered_df):
-    global current_canvas
 
     # Clear previous canvas and missing data label if any
     for widget in center_frame.winfo_children():
