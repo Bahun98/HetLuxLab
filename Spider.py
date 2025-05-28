@@ -6,18 +6,13 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import re
 from utils.street_table import update_street_detail_table
+from calc.calculations import generate_data_frames
 
-# TODO add real data sheet.
+df_complete, df_clean, df_missing = generate_data_frames()
 
-file_path = 'real_data.xlsx'
-# file_path = 'data_quality_kleurtemperatuur2.xlsx'
-data = pd.read_excel(file_path, sheet_name='Main_data')
-
-# Average per WIJK
-average_data = data.groupby('WIJK')[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().reset_index()
-
+# data_frames = [df_complete, df_clean, df_missing]
 # At startup
-wijken = sorted(data["WIJK"].dropna().unique())
+wijken = sorted(df_complete["WIJK"].dropna().unique())
 
 # GUI root
 root = tk.Tk()
@@ -89,7 +84,7 @@ def on_edge_click(event):
     ind = event.ind[0] % len(line.criteria)
     clicked_criteria = line.criteria[ind]
     Wijk_name = line.Wijk
-    update_street_detail_table(Wijk_name, data)
+    update_street_detail_table(Wijk_name, df_complete)
 
 # Keep a global canvas reference so we can destroy previous plot
 current_canvas = None
@@ -127,7 +122,7 @@ def plot_spider_web(criteria, values, title):
 # When user selects a WIJK from dropdown
 def on_Wijk_selected(event):
     wijk = selected_Wijk.get()
-    filtered = data[data["WIJK"] == wijk].copy()
+    filtered = df_complete[df_complete["WIJK"] == wijk].copy()
 
     if filtered.empty:
         return
@@ -149,8 +144,8 @@ def on_Wijk_selected(event):
         street_listbox.insert(tk.END, straat)
     
     # Compute WIJK averages
-    wijk_averages = filtered[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().tolist()
-    criteria = ["Nature_composite", "Humans_composite", "Efficiency_composite"]
+    wijk_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
+    criteria = ["nature_composite", "humans_composite", "efficiency_composite"]
     plot_spider_web(criteria, wijk_averages, wijk)
 
 def on_street_selected(event):
@@ -167,8 +162,8 @@ def on_street_selected(event):
         return
 
     # Compute spider plot values
-    street_averages = filtered[["Nature_composite", "Humans_composite", "Efficiency_composite"]].mean().tolist()
-    criteria = ["Nature_composite", "Humans_composite", "Efficiency_composite"]
+    street_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
+    criteria = ["nature_composite", "humans_composite", "efficiency_composite"]
     plot_spider_web(criteria, street_averages, straat)
 
     update_street_detail_table(filtered, right_frame)
