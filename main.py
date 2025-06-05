@@ -6,7 +6,6 @@ import numpy as np
 from calc.calculations import generate_data_frames
 from utils.scrollable_frame import create_scrollable_frame
 from graphs.spider_plot import (
-    on_edge_click,
     on_wijk_selected,
     on_street_selected,
     plot_spider_web
@@ -43,10 +42,18 @@ center_frame.pack(side="left", fill="both", expand=True)
 # Right frame container (fixed size, no scroll yet)
 right_frame_container = tk.Frame(main_frame, width=300, height=600, bg="lightgray")
 right_frame_container.pack(side="left", fill="y")
-right_frame_container.pack_propagate(False)
+# right_frame_container.pack_propagate(False)
+# Scrollable frame inside right_frame_container (MUST come first)
+right_scrollable_frame, right_inner_frame = create_scrollable_frame(right_frame_container)
+
+# Create two subframes INSIDE the scrollable right_inner_frame
+aggregate_frame = ttk.Frame(right_inner_frame)
+aggregate_frame.pack(fill="x", padx=5, pady=(5, 0))
+
+street_list_frame = ttk.Frame(right_inner_frame)
+street_list_frame.pack(fill="both", expand=True, padx=5, pady=(0, 5))
 
 # Scrollable frame inside right_frame_container
-right_scrollable_frame, right_inner_frame = create_scrollable_frame(right_frame_container)
 
 # Label for wijk selection
 label = tk.Label(
@@ -85,16 +92,16 @@ street_scrollbar.pack(side="right", fill="y", pady=(0, 10))
 
 dropdown.bind(
     "<<ComboboxSelected>>",
-    lambda event: on_wijk_selected(event, selected_Wijk, df_complete, street_listbox, center_frame, plot_spider_web)
+    lambda event: on_wijk_selected(event, selected_Wijk, df_complete, street_listbox, center_frame, plot_spider_web, aggregate_frame, street_list_frame)
 )
 
 street_listbox.bind(
     "<<ListboxSelect>>",
-    lambda event: on_street_selected(event, street_listbox, right_inner_frame, center_frame, plot_spider_web)
+    lambda event: on_street_selected(event, street_listbox, right_inner_frame, center_frame, plot_spider_web, aggregate_frame)
 )
 
 selected_Wijk.set(wijk_options[0])
-on_wijk_selected(None, selected_Wijk, df_complete, street_listbox, center_frame, plot_spider_web)
+on_wijk_selected(None, selected_Wijk, df_complete, street_listbox, center_frame, plot_spider_web, aggregate_frame, street_list_frame)
 
 def on_closing():
     root.destroy()

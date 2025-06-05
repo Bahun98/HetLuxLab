@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 from utils.street_table import update_street_detail_table
+from utils.aggregate_values import show_aggregated_values
 
 def plot_spider_web(criteria, values, title, filtered_df, target_frame):
     # Clear previous canvas and missing data label if any
@@ -30,6 +31,28 @@ def plot_spider_web(criteria, values, title, filtered_df, target_frame):
     ax.set_ylim(1, 5)
     line, = ax.plot(angles, values, 'o-', label=title, picker=True)
     ax.fill(angles, values, alpha=0.25)
+
+    for i, angle in enumerate(angles[:-1]):  # Skip the duplicated last point
+        value = values[i]
+        # Adjust position slightly outward for readability
+        x = angle
+        y = value + 0.1
+        ax.text(
+            angle,
+            value + 0.1,
+            f"{value:.1f}",
+            ha='center',
+            va='center',
+            fontsize=12,
+            color='black',
+            bbox=dict(
+                facecolor='white',
+                alpha=0.8,      # Transparency: 0.0 (fully transparent) to 1.0 (opaque)
+                edgecolor='none',
+                boxstyle='round,pad=0.2'
+            )
+        )
+
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(criteria)
     ax.set_title(f"{title}")
@@ -59,7 +82,7 @@ def on_edge_click(event, df_complete):
     update_street_detail_table(Wijk_name, df_complete)
 
 
-def on_wijk_selected(event, selected_wijk, df_complete, street_listbox, center_frame, plot_spider_web):
+def on_wijk_selected(event, selected_wijk, df_complete, street_listbox, center_frame, plot_spider_web, aggregate_frame, street_list_frame):
     global current_filtered_data
 
     wijk = selected_wijk.get()
@@ -86,8 +109,13 @@ def on_wijk_selected(event, selected_wijk, df_complete, street_listbox, center_f
     criteria = ["Nature", "Humans", "Efficiency"]
     plot_spider_web(criteria, wijk_averages, wijk, filtered, center_frame)
 
+    
+    show_aggregated_values(filtered, aggregate_frame)
+    update_street_detail_table(filtered, street_list_frame)
 
-def on_street_selected(event, street_listbox, right_inner_frame, center_frame, plot_spider_web):
+
+def on_street_selected(event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame):
+    
     selection = street_listbox.curselection()
     if not selection:
         return
@@ -101,4 +129,5 @@ def on_street_selected(event, street_listbox, right_inner_frame, center_frame, p
     criteria = ["Nature", "Humans", "Efficiency"]
     plot_spider_web(criteria, street_averages, straat, filtered, center_frame)
 
-    update_street_detail_table(filtered, right_inner_frame)
+    show_aggregated_values(filtered, aggregate_frame)
+    update_street_detail_table(filtered, street_list_frame)

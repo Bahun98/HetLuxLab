@@ -47,11 +47,11 @@ def update_street_detail_table(filtered, parent_frame):
 
             # Treat 0 as missing_message for specific columns
             is_missing = pd.isna(val) or (
-                col in ("LUMEN_SQM", "LUMEN") and val == 0
+                col in ("LUMEN_SQM", "LUMEN_LAMP") and val == 0
             )
 
             # Format values based on column
-            if col in ("LUMEN_SQM", "LUMEN"):
+            if col in ("LUMEN_SQM", "LUMEN_LAMP"):
                 display_val = f"{val:.2f}" if not is_missing else missing_message
             elif col in ("LPH_ARMATUUR", "CK_IN_KELVIN"):
                 if pd.isna(val):
