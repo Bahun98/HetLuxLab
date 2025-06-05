@@ -67,11 +67,13 @@ This creates a .venv folder in your project directory.
 Activate the virtual environment:
 
 For PowerShell (default in VS Code on Windows):
+```bash
 .\.venv\Scripts\Activate.ps1
-
+```
 For Command Prompt:
+```bash
 .\.venv\Scripts\activate.bat
-
+```
 ### 3. Install Dependencies
 With the virtual environment activated, install required Python packages from the requirements.txt file:
 
@@ -90,5 +92,5 @@ Once these steps are complete, you can run the main Python script, Spider.py to 
 ## License
 
 Owned by Het Lux Lab and Fontys
----
+
 
