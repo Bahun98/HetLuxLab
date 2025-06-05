@@ -97,7 +97,7 @@ dropdown.bind(
 
 street_listbox.bind(
     "<<ListboxSelect>>",
-    lambda event: on_street_selected(event, street_listbox, right_inner_frame, center_frame, plot_spider_web, aggregate_frame)
+    lambda event: on_street_selected(event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame)
 )
 
 selected_Wijk.set(wijk_options[0])

@@ -27,7 +27,7 @@ def show_aggregated_values(filtered_df: pd.DataFrame, aggregate_frame: tk.Frame)
     summary_frame.is_aggregate_summary = True  # Custom attribute to identify it
     summary_frame.pack(anchor="w", fill="x", pady=(5, 10))
 
-    header = ttk.Label(summary_frame, text="Averages for this street:", font=("Segoe UI", 9, "bold"))
+    header = ttk.Label(summary_frame, text="Average aggregate values:", font=("Segoe UI", 9, "bold"))
     header.pack(anchor="w")
 
     for col, label in columns.items():
