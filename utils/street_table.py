@@ -17,10 +17,11 @@ def update_street_detail_table(filtered, parent_frame):
     )
     stats_label.pack(anchor="w", padx=10, pady=(5, 10))
 
-    # Group data by TYPE_LAMP
+    # Group data by TYPE_LAMP and sort by # of lamps
     grouped = filtered.groupby("TYPE_LAMP")
+    sorted_groups = sorted(grouped, key=lambda g: len(g[1]), reverse=True)
 
-    for lamp_type, group in grouped:
+    for lamp_type, group in sorted_groups:
         count = len(group)
         first_row = group.iloc[0]
 
@@ -33,44 +34,36 @@ def update_street_detail_table(filtered, parent_frame):
             "LUMEN_SQM": "Lumen in square meter",
             "LPH_ARMATUUR": "Pole height",
             "CK_IN_KELVIN": "Colour temperature",
-            "TYPE_ARMATUUR": "Armature",
+            "TYPE_ARMATUUR": "Armature", 
         }
 
         details_frame = ttk.Frame(parent_frame)
         details_frame.pack(anchor="w", padx=20)
 
         for col, label_text in details.items():
-            if col == "LPH_ARMATUUR":
-                # Get counts of unique pole heights in this group
-                height_counts = group["LPH_ARMATUUR"].value_counts(dropna=True).sort_index()
-                height_list = [f"{int(height)} cm ({count}x)" for height, count in height_counts.items()]
-                display_val = ", ".join(height_list) if height_list else "N/A"
-            elif col == "LUMEN_SQM":
-                val = first_row[col]
-                display_val = f"{val:.2f}" if not pd.isna(val) else "N/A"
-            elif col == "CK_IN_KELVIN":
-                val = first_row[col]
-                display_val = f"{val} kelvin" if not pd.isna(val) else "N/A"
+            val = first_row[col]
+
+            # Format values based on column
+            if col == "LUMEN_SQM":
+                display_val = f"{val:.2f}" if not pd.isna(val) else val
+            elif col in ("LPH_ARMATUUR", "CK_IN_KELVIN"):
+                if pd.isna(val):
+                    display_val = val
+                else:
+                    unit = "cm" if col == "LPH_ARMATUUR" else "kelvin"
+                    display_val = f"{val} {unit}"
             else:
-                display_val = first_row[col]
+                display_val = val
 
-            # Default label formatting
-            label_style = {"wraplength": 300, "justify": "left"}
+            font = ("Segoe UI", 9, "bold") if pd.isna(val) else ("Segoe UI", 9)
+            color = "red" if pd.isna(val) else "black"
 
-            # Create label text with the value styled if missing
-            if display_val in ("N/A", None, ""):
-                label = ttk.Label(
-                    details_frame,
-                    text=f"- {label_text}: {display_val}",
-                    foreground="red",
-                    font=("Segoe UI", 10, "bold"),
-                    **label_style
-                )
-            else:
-                label = ttk.Label(
-                    details_frame,
-                    text=f"- {label_text}: {display_val}",
-                    **label_style
-                )
-
+            label = ttk.Label(
+                details_frame,
+                text=f"- {label_text}: {display_val}",
+                wraplength=300,
+                justify="left",
+                font=font,
+                foreground=color
+            )
             label.pack(anchor="w")
