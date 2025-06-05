@@ -8,9 +8,9 @@ import re
 from utils.street_table import update_street_detail_table
 from calc.calculations import generate_data_frames
 from utils.scrollable_frame import create_scrollable_frame
-from PIL import Image, ImageTk
 
-df_complete, df_clean, df_missing = generate_data_frames()
+# df_complete, df_clean, df_missing = generate_data_frames()
+df_complete = generate_data_frames()
 
 wijk_options = sorted(df_complete["WIJK"].dropna().unique())
 

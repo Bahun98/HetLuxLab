@@ -31,32 +31,40 @@ def update_street_detail_table(filtered, parent_frame):
 
         # Column name → Display label mapping
         details = {
+            "LUMEN_LAMP": "Lumen", 
             "LUMEN_SQM": "Lumen in square meter",
             "LPH_ARMATUUR": "Pole height",
             "CK_IN_KELVIN": "Colour temperature",
-            "TYPE_ARMATUUR": "Armature", 
+            "TYPE_ARMATUUR": "Armature",
         }
 
         details_frame = ttk.Frame(parent_frame)
         details_frame.pack(anchor="w", padx=20)
+        missing_message = "nan"
 
         for col, label_text in details.items():
             val = first_row[col]
 
+            # Treat 0 as missing_message for specific columns
+            is_missing = pd.isna(val) or (
+                col in ("LUMEN_SQM", "LUMEN") and val == 0
+            )
+
             # Format values based on column
-            if col == "LUMEN_SQM":
-                display_val = f"{val:.2f}" if not pd.isna(val) else val
+            if col in ("LUMEN_SQM", "LUMEN"):
+                display_val = f"{val:.2f}" if not is_missing else missing_message
             elif col in ("LPH_ARMATUUR", "CK_IN_KELVIN"):
                 if pd.isna(val):
-                    display_val = val
+                    display_val = missing_message
                 else:
                     unit = "cm" if col == "LPH_ARMATUUR" else "kelvin"
                     display_val = f"{val} {unit}"
             else:
-                display_val = val
+                display_val = val if not is_missing else missing_message
 
-            font = ("Segoe UI", 9, "bold") if pd.isna(val) else ("Segoe UI", 9)
-            color = "red" if pd.isna(val) else "black"
+            # Style missing_message values
+            font = ("Segoe UI", 9, "bold") if is_missing else ("Segoe UI", 9)
+            color = "red" if is_missing else "black"
 
             label = ttk.Label(
                 details_frame,
