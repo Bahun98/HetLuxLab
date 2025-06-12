@@ -10,6 +10,7 @@ Key features include filtering by wijk, cleaning and grouping street names, disp
 
 ## Features
 
+- Download the latest Eindhoven lighting dataset from the Eindhoven OpenData website.
 - Load and filter lighting data by wijk (neighborhood).
 - Clean street names to remove numeric and alphanumeric suffixes (e.g., "Zandeiland 003A" → "Zandeiland").
 - Display total lamp counts and percentage of missing/zero flagged lamps.
@@ -33,6 +34,7 @@ Key features include filtering by wijk, cleaning and grouping street names, disp
 
 ## Backlog / Future Improvements
 
+- Add steps to automate input file creation. (Add to the Refresh_data.py)
 - Add data import wizards and support for multiple data sources/formats.
 - Enable export of filtered data and reports in CSV or PDF formats, this capability exists in calculations.py but is commented out.
 - Implement more advanced filtering and searching capabilities.
@@ -82,6 +84,8 @@ This installs all necessary libraries (like pandas, tkinter, Pillow, etc.).
 
 ### 4. Place Your Dataset
 Make sure your dataset file named real_data.xlsx is placed in the root folder of the project (the same folder as your main Python script).
+
+You can download the most recent dataset using Refresh_data.py, add calculated columns using custom logic or use the exisitng "real_data.xlsx".
 
 ### 5. Dataset Requirements
 The dataset must include a column for colour temperature, named exactly as CK_IN_KELVIN. This column is used to analyze the colour temperature of the lamps.
