@@ -84,12 +84,13 @@ def generate_data_frames():
 
 
     # split df_complete: without missing/zero values vs with missing/zero values only
-    df_clean = df_complete.dropna(subset=cols).copy()
-    df_missing = df_complete[df_complete[cols].isna().any(axis=1)].copy()
+    # df_clean = df_complete.dropna(subset=cols).copy()
+    # df_missing = df_complete[df_complete[cols].isna().any(axis=1)].copy()
 
     # export
     # df_complete.to_excel("df_complete.xlsx", index=False)
     # df_clean.to_excel("df_clean.xlsx", index=False)
     # df_missing.to_excel("df_missing.xlsx", index=False)
 
-    return df_complete, df_clean, df_missing
+    # return df_complete, df_clean, df_missing
+    return df_complete

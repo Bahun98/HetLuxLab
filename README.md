@@ -24,6 +24,7 @@ Key features include filtering by wijk, cleaning and grouping street names, disp
 ## Limitations
 
 - Data depends on accurate and consistent input CSV or database files.
+- Missing data is 'Missing at random' category -- All missing data needs to be carefully considered as to why the data is missing. Deleting incomplete row is not a feasible strategy.
 - Lamp attribute completeness varies; some data fields may be missing or inconsistent, namely colour temperature in Kelvin.
 - Currently designed for single-user desktop use; no multi-user or web version yet.
 - Some GUI behaviors (e.g., mouse wheel scrolling) depend on OS specifics.
