@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 def generate_data_frames():
 
-    file_path = 'real_data.xlsx'
+    file_path = 'real_data_test.xlsx'
     df_complete = pd.read_excel(file_path, sheet_name='Main_data') # for testing add ,nrows=151
 
     # transfrom lumen into lumen per square meter

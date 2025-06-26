@@ -75,12 +75,17 @@ def plot_spider_web(criteria, values, title, filtered_df, target_frame):
 current_filtered_data = pd.DataFrame()
 
 
-def on_edge_click(event, df_complete):
-    line = event.artist
-    ind = event.ind[0] % len(line.criteria)
-    Wijk_name = line.Wijk
-    update_street_detail_table(Wijk_name, df_complete)
+# def on_edge_click(event, df_complete):
+#     line = event.artist
+#     ind = event.ind[0] % len(line.criteria)
+#     Wijk_name = line.Wijk
+#     update_street_detail_table(Wijk_name, df_complete)
 
+def on_edge_click(event, df_complete, detail_frame):
+    line = event.artist
+    Wijk_name = line.Wijk
+    filtered = df_complete[df_complete["WIJK"] == Wijk_name]
+    update_street_detail_table(filtered, detail_frame)
 
 def on_wijk_selected(event, selected_wijk, df_complete, street_listbox, center_frame, plot_spider_web, aggregate_frame, street_list_frame):
     global current_filtered_data
@@ -113,15 +118,17 @@ def on_wijk_selected(event, selected_wijk, df_complete, street_listbox, center_f
     show_aggregated_values(filtered, aggregate_frame)
     update_street_detail_table(filtered, street_list_frame)
 
+def on_street_selected(
+    straat,
+    street_list_frame,
+    center_frame,
+    plot_spider_web,
+    aggregate_frame,
+    dataframe=None
+):
 
-def on_street_selected(event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame):
-    
-    selection = street_listbox.curselection()
-    if not selection:
-        return
-
-    straat = street_listbox.get(selection[0])
-    filtered = current_filtered_data[current_filtered_data["Cleaned_Straat"] == straat].copy()
+    df = dataframe if dataframe is not None else current_filtered_data
+    filtered = df[df["Cleaned_Straat"] == straat].copy()
     if filtered.empty:
         return
 

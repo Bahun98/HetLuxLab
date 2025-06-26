@@ -11,7 +11,6 @@ from graphs.spider_plot import (
     plot_spider_web
 )
 from difflib import get_close_matches
-from utils.street_table import update_street_detail_table
 
 # df_complete, df_clean, df_missing = generate_data_frames()
 df_complete = generate_data_frames()
@@ -29,7 +28,7 @@ search_popup = None
 # GUI root
 root = tk.Tk()
 root.title("Het Lux Lab lighting analysis tool")
-root.iconphoto(False, tk.PhotoImage(file="icons\luxlabicon.png"))
+root.iconphoto(False, tk.PhotoImage(file=r"icons/luxlabicon.png"))
 root.state('zoomed')
 root.lift()
 root.attributes('-topmost', True)
@@ -49,10 +48,10 @@ left_frame.pack_propagate(False)
 center_frame = tk.Frame(main_frame, width=400, height=600)
 center_frame.pack(side="left", fill="both", expand=True)
 
-# Right frame container (fixed size, no scroll yet)
+# Right frame container 
 right_frame_container = tk.Frame(main_frame, width=300, height=600, bg="lightgray")
 right_frame_container.pack(side="left", fill="y")
-# right_frame_container.pack_propagate(False)
+
 # Scrollable frame inside right_frame_container (MUST come first)
 right_scrollable_frame, right_inner_frame = create_scrollable_frame(right_frame_container)
 
@@ -160,17 +159,19 @@ def search_streets(event, street_listbox):
         selection = popup_listbox.curselection()
         if selection:
             street_name = popup_listbox.get(selection[0])
-            # Find index in listbox
-            streets = list(street_listbox.get(0, tk.END))
-            if street_name in streets:
-                idx = streets.index(street_name)
-                street_listbox.selection_clear(0, tk.END)
-                street_listbox.selection_set(idx)
-                street_listbox.event_generate("<<ListboxSelect>>")
-        search_popup.destroy()
+            search_var.set("")  # Clear search box
+            search_popup.destroy()
+
+            on_street_selected(
+                straat=street_name,
+                street_list_frame=street_list_frame,
+                center_frame=center_frame,
+                plot_spider_web=plot_spider_web,
+                aggregate_frame=aggregate_frame,
+                dataframe=df_complete
+            )
 
     popup_listbox.bind("<<ListboxSelect>>", on_select)
-
 
 def on_search_result_selected(event):
     selection = search_results_listbox.curselection()
@@ -178,31 +179,41 @@ def on_search_result_selected(event):
         return
 
     straat = search_results_listbox.get(selection[0])
+    print("Straat is: " + straat)
     search_results_listbox.pack_forget()
     search_var.set("")  # Clear search box
 
-    # Create cleaned street column if not already done
     if "Cleaned_Straat" not in df_complete.columns:
+        print("No cleaned_straat column found")
         df_complete["Cleaned_Straat"] = (
             df_complete["straatnaam+identificatie_mast"]
             .str.extract(r"^([A-Za-zÀ-ÿ'\- ]+)", expand=False)
             .str.strip()
         )
 
-    # Filter by street name globally
-    filtered = df_complete[df_complete["Cleaned_Straat"] == straat].copy()
-    if filtered.empty:
+    on_street_selected(
+        straat=straat,
+        street_list_frame=street_list_frame,
+        center_frame=center_frame,
+        plot_spider_web=plot_spider_web,
+        aggregate_frame=aggregate_frame,
+        dataframe=df_complete
+    )
+
+def handle_listbox_select(event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame):
+    selection = street_listbox.curselection()
+    if not selection:
         return
-
-    street_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()
-    criteria = ["Nature", "Humans", "Efficiency"]
-
-    plot_spider_web(criteria, street_averages, straat, filtered, center_frame)
-
-    from utils.aggregate_values import show_aggregated_values
-
-    show_aggregated_values(filtered, aggregate_frame)
-    update_street_detail_table(filtered, street_list_frame)
+    index = selection[0]
+    straat = street_listbox.get(index)
+    on_street_selected(
+        straat,
+        street_list_frame,
+        center_frame,
+        plot_spider_web,
+        aggregate_frame,
+        None  # or pass dataframe explicitly if needed
+    )
 
 search_results_listbox.bind("<<ListboxSelect>>", on_search_result_selected)
 
@@ -222,7 +233,9 @@ dropdown.bind(
 
 street_listbox.bind(
     "<<ListboxSelect>>",
-    lambda event: on_street_selected(event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame)
+    lambda event: handle_listbox_select(
+        event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame
+    )
 )
 
 search_entry.bind("<KeyRelease>", lambda e: search_streets(e, street_listbox))
