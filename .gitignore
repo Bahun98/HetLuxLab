@@ -1,3 +1,23 @@
-.venv
+# Virtual environment
+.venv/
+
+# Python cache and compiled files
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Excel intermediate data files
 df_*.xls*
+real_data.xlsx
+
+# Build folders
+dist/
+build/
+
+# IDE and OS files (optional)
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

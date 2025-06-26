@@ -1,14 +1,22 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import sys
+import os 
 
 # *** Before loading the data: *** 
 # 1. remove prior columns from the excell file that are related to the algorithm
 # 2. remove all words 'blauw' from color temp columns or from Ellen's spreadsheet
 
+def get_resource_path(filename):
+    if hasattr(sys, '_MEIPASS'):
+        # Running from PyInstaller bundle
+        return os.path.join(sys._MEIPASS, filename)
+    return os.path.join(os.path.abspath("."), filename)
+
+
 def generate_data_frames():
 
-    file_path = 'real_data_test.xlsx'
+    file_path = get_resource_path('real_data.xlsx')
     df_complete = pd.read_excel(file_path, sheet_name='Main_data') # for testing add ,nrows=151
 
     # transfrom lumen into lumen per square meter

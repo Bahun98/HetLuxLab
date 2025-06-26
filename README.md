@@ -92,6 +92,10 @@ You can download the most recent dataset using Refresh_data.py, add calculated c
 The dataset must include a column for colour temperature, named exactly as CK_IN_KELVIN. This column is used to analyze the colour temperature of the lamps.
 
 Once these steps are complete, you can run the main Python script, Spider.py to start the GUI application.
+
+### 6. Compiling the project to exe
+Run the build.bat script to create a executable inside of the dist folder!
+Do not delete the HetLuxLab.spec file, it is used to build the application.
 ---
 
 ## License
