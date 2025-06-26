@@ -126,10 +126,6 @@ def on_street_selected(
 
     df = dataframe
 
-    print(f"Columns in df: {df.columns}")
-    print(f"Is 'STRAATNAAM' in df? {'STRAATNAAM' in df.columns}")
-    print(f"Filtering for street: {straat}")
-
     if df.empty or "STRAATNAAM" not in df.columns:
         print("Dataframe empty or missing 'STRAATNAAM' column - aborting")
         return
