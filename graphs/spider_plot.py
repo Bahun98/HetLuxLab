@@ -8,11 +8,13 @@ import pandas as pd
 from utils.street_table import update_street_detail_table
 from utils.aggregate_values import show_aggregated_values
 
+
 def plot_spider_web(criteria, values, title, filtered_df, target_frame):
+    print(f"plot_spider_web called with target_frame: {target_frame}")
     # Clear previous canvas and missing data label if any
     for widget in target_frame.winfo_children():
+        print(f"Destroying widget: {widget}")
         widget.destroy()
-
     # Calculate missing percentage
     missing_percent = filtered_df['missing_zero_flag'].mean() * 100 
     total_lamps = len(filtered_df)
@@ -75,12 +77,6 @@ def plot_spider_web(criteria, values, title, filtered_df, target_frame):
 current_filtered_data = pd.DataFrame()
 
 
-# def on_edge_click(event, df_complete):
-#     line = event.artist
-#     ind = event.ind[0] % len(line.criteria)
-#     Wijk_name = line.Wijk
-#     update_street_detail_table(Wijk_name, df_complete)
-
 def on_edge_click(event, df_complete, detail_frame):
     line = event.artist
     Wijk_name = line.Wijk
@@ -89,22 +85,18 @@ def on_edge_click(event, df_complete, detail_frame):
 
 def on_wijk_selected(event, selected_wijk, df_complete, street_listbox, center_frame, plot_spider_web, aggregate_frame, street_list_frame):
     global current_filtered_data
+    import utils.state as state
+    state.suppress_next_listbox_select = True
 
+    print(f"On_wijk_selected got called: {selected_wijk.get()}")
     wijk = selected_wijk.get()
     filtered = df_complete[df_complete["WIJK"] == wijk].copy()
     if filtered.empty:
         return
 
-    filtered["Cleaned_Straat"] = (
-        filtered["straatnaam+identificatie_mast"]
-        .str.extract(r"^([A-Za-zÀ-ÿ'\- ]+)", expand=False)
-        .str.strip()
-    )
-    current_filtered_data = filtered
-
     # Update listbox
     street_listbox.delete(0, 'end')
-    clean_streets = filtered["Cleaned_Straat"].dropna().astype(str).str.strip()
+    clean_streets = filtered["STRAATNAAM"].dropna().astype(str).str.strip()
     clean_streets = clean_streets[clean_streets != ""]
 
     for straat in sorted(clean_streets.unique()):
@@ -124,12 +116,27 @@ def on_street_selected(
     center_frame,
     plot_spider_web,
     aggregate_frame,
-    dataframe=None
+    dataframe  # remove default None to force explicit data passing
 ):
+    print(f"On_street_selected got called: {straat}")
 
-    df = dataframe if dataframe is not None else current_filtered_data
-    filtered = df[df["Cleaned_Straat"] == straat].copy()
+    if dataframe is None:
+        print("Error: dataframe must be provided to on_street_selected")
+        return
+
+    df = dataframe
+
+    print(f"Columns in df: {df.columns}")
+    print(f"Is 'STRAATNAAM' in df? {'STRAATNAAM' in df.columns}")
+    print(f"Filtering for street: {straat}")
+
+    if df.empty or "STRAATNAAM" not in df.columns:
+        print("Dataframe empty or missing 'STRAATNAAM' column - aborting")
+        return
+
+    filtered = df[df["STRAATNAAM"] == straat].copy()
     if filtered.empty:
+        print(f"No rows found for street: {straat}")
         return
 
     street_averages = filtered[["nature_composite", "humans_composite", "efficiency_composite"]].mean().tolist()

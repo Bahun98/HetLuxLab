@@ -4,7 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from calc.calculations import generate_data_frames
-from utils.scrollable_frame import create_scrollable_frame
+from utils.scrollable_frame import (create_scrollable_frame)
+import utils.state as state
 from graphs.spider_plot import (
     on_wijk_selected,
     on_street_selected,
@@ -14,12 +15,6 @@ from difflib import get_close_matches
 
 # df_complete, df_clean, df_missing = generate_data_frames()
 df_complete = generate_data_frames()
-
-df_complete["Cleaned_Straat"] = (
-    df_complete["straatnaam+identificatie_mast"]
-    .str.extract(r"^([A-Za-zÀ-ÿ'\- ]+)", expand=False)
-    .str.strip()
-)
 
 wijk_options = sorted(df_complete["WIJK"].dropna().unique())
 
@@ -125,7 +120,7 @@ def search_streets(event, street_listbox):
             search_popup = None
         return
 
-    all_streets = df_complete["Cleaned_Straat"].dropna().unique().tolist()
+    all_streets = df_complete["STRAATNAAM"].dropna().unique().tolist()
     matches = get_close_matches(query, all_streets, n=5, cutoff=0.3)
 
     if not matches:
@@ -183,14 +178,6 @@ def on_search_result_selected(event):
     search_results_listbox.pack_forget()
     search_var.set("")  # Clear search box
 
-    if "Cleaned_Straat" not in df_complete.columns:
-        print("No cleaned_straat column found")
-        df_complete["Cleaned_Straat"] = (
-            df_complete["straatnaam+identificatie_mast"]
-            .str.extract(r"^([A-Za-zÀ-ÿ'\- ]+)", expand=False)
-            .str.strip()
-        )
-
     on_street_selected(
         straat=straat,
         street_list_frame=street_list_frame,
@@ -201,6 +188,11 @@ def on_search_result_selected(event):
     )
 
 def handle_listbox_select(event, street_listbox, street_list_frame, center_frame, plot_spider_web, aggregate_frame):
+    if state.suppress_next_listbox_select:
+        state.suppress_next_listbox_select = False
+        return
+
+    
     selection = street_listbox.curselection()
     if not selection:
         return
@@ -212,7 +204,7 @@ def handle_listbox_select(event, street_listbox, street_list_frame, center_frame
         center_frame,
         plot_spider_web,
         aggregate_frame,
-        None  # or pass dataframe explicitly if needed
+        dataframe=df_complete
     )
 
 search_results_listbox.bind("<<ListboxSelect>>", on_search_result_selected)
