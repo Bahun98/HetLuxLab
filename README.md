@@ -89,9 +89,19 @@ Make sure your dataset file named real_data.xlsx is placed in the root folder of
 You can download the most recent dataset using Refresh_data.py, add calculated columns using custom logic in calculations.py or use the exisitng "real_data.xlsx" as input.
 
 ### 5. Dataset Requirements
-The dataset must include a column for colour temperature, named exactly as CK_IN_KELVIN. This column is used to analyze the colour temperature of the lamps.
+The dataset must include the following columns inside of a sheet called *Main_data*:
 
-Once these steps are complete, you can run the main Python script, Spider.py to start the GUI application.
+WIJK
+STRAATNAAM
+geo_shape
+LUMEN_LAMP
+LPH_ARMATUUR
+CK_IN_KELVIN
+
+The application expects these columns to be present inside of real_data.xlsx inside of the main (root) folder of the application.
+
+
+Once these steps are complete, you can run the main Python script, main.py or the application executable itself. 
 
 ### 6. Compiling the project to exe
 Run the build.bat script to create a executable inside of the dist folder!
